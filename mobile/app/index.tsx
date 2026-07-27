@@ -184,6 +184,36 @@ export default function HomeScreen() {
               );
             })}
           </View>
+
+          <Text style={styles.filterGroupLabel}>Ordenação por Contador</Text>
+          <View style={styles.chipsContainer}>
+            <TouchableOpacity
+              style={[styles.typeChip, sortByPageCount === 'none' && styles.chipActive]}
+              onPress={() => setSortByPageCount('none')}
+            >
+              <Text style={[styles.chipText, sortByPageCount === 'none' && styles.chipTextActive]}>
+                Padrão
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.typeChip, sortByPageCount === 'desc' && styles.chipActive]}
+              onPress={() => setSortByPageCount('desc')}
+            >
+              <Text style={[styles.chipText, sortByPageCount === 'desc' && styles.chipTextActive]}>
+                Maior para menor ⬇
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.typeChip, sortByPageCount === 'asc' && styles.chipActive]}
+              onPress={() => setSortByPageCount('asc')}
+            >
+              <Text style={[styles.chipText, sortByPageCount === 'asc' && styles.chipTextActive]}>
+                Menor para maior ⬆
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
