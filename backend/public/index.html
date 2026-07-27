@@ -612,6 +612,7 @@
             <th>Marca & Modelo</th>
             <th>Status</th>
             <th>Nº de Série</th>
+            <th>Peça Necessária</th>
             <th>Especificações</th>
             <th>Localização</th>
             <th>Notas</th>
@@ -752,6 +753,7 @@
             </span>
           </td>
           <td>${e.serial_number || '<span style="color: var(--text-muted)">-</span>'}</td>
+          <td style="color: var(--text-sub); font-weight: 500;">${e.part_needed || '<span style="color: var(--text-muted)">-</span>'}</td>
           <td style="color: var(--text-sub); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap" title="${e.specs || ''}">
             ${e.specs || '-'}
           </td>
@@ -852,6 +854,10 @@
               <span>${equipment.serial_number || '<span style="color: var(--text-muted)">-</span>'}</span>
             </div>
             <div class="details-info-item">
+              <span class="details-info-label">Peça Necessária:</span>
+              <span>${equipment.part_needed || '<span style="color: var(--text-muted)">-</span>'}</span>
+            </div>
+            <div class="details-info-item">
               <span class="details-info-label">Localização:</span>
               <span>${equipment.location || '<span style="color: var(--text-muted)">-</span>'}</span>
             </div>
@@ -913,6 +919,7 @@
           <th style="border: 1px solid #cbd5e1; padding: 8px;">Marca</th>
           <th style="border: 1px solid #cbd5e1; padding: 8px;">Modelo</th>
           <th style="border: 1px solid #cbd5e1; padding: 8px;">Nº de Série</th>
+          <th style="border: 1px solid #cbd5e1; padding: 8px;">Peça Necessária</th>
           <th style="border: 1px solid #cbd5e1; padding: 8px;">Status</th>
           <th style="border: 1px solid #cbd5e1; padding: 8px;">Especificações</th>
           <th style="border: 1px solid #cbd5e1; padding: 8px;">Localização</th>
@@ -928,6 +935,7 @@
           <td style="border: 1px solid #cbd5e1; padding: 8px;">${e.brand}</td>
           <td style="border: 1px solid #cbd5e1; padding: 8px;">${e.model}</td>
           <td style="border: 1px solid #cbd5e1; padding: 8px; mso-number-format:'\\@';">${e.serial_number || '-'}</td>
+          <td style="border: 1px solid #cbd5e1; padding: 8px;">${e.part_needed || '-'}</td>
           <td style="border: 1px solid #cbd5e1; padding: 8px;">${STATUS_LABELS[e.status] || e.status}</td>
           <td style="border: 1px solid #cbd5e1; padding: 8px;">${e.specs || '-'}</td>
           <td style="border: 1px solid #cbd5e1; padding: 8px;">${e.location || '-'}</td>
