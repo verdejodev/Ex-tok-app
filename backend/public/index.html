@@ -292,14 +292,14 @@
     .status-Functional { background-color: rgba(47, 233, 43, 0.1); color: var(--status-ok); }
     .status-Functional .status-dot { background-color: var(--status-ok); }
 
-    .status-Needs\ maintenance { background-color: rgba(255, 81, 2, 0.1); color: var(--status-maint-needed); }
-    .status-Needs\ maintenance .status-dot { background-color: var(--status-maint-needed); }
+    .status-Needs-maintenance { background-color: rgba(255, 81, 2, 0.1); color: var(--status-maint-needed); }
+    .status-Needs-maintenance .status-dot { background-color: var(--status-maint-needed); }
 
-    .status-In\ maintenance { background-color: rgba(96, 165, 250, 0.1); color: var(--status-in-maint); }
-    .status-In\ maintenance .status-dot { background-color: var(--status-in-maint); }
+    .status-In-maintenance { background-color: rgba(96, 165, 250, 0.1); color: var(--status-in-maint); }
+    .status-In-maintenance .status-dot { background-color: var(--status-in-maint); }
 
-    .status-Ready\ for\ sale { background-color: rgba(196, 181, 253, 0.1); color: var(--status-sale); }
-    .status-Ready\ for\ sale .status-dot { background-color: var(--status-sale); }
+    .status-Ready-for-sale { background-color: rgba(196, 181, 253, 0.1); color: var(--status-sale); }
+    .status-Ready-for-sale .status-dot { background-color: var(--status-sale); }
 
     .status-Sold { background-color: rgba(148, 163, 184, 0.1); color: var(--status-sold); }
     .status-Sold .status-dot { background-color: var(--status-sold); }
@@ -746,7 +746,7 @@
           </td>
           <td class="col-printer">${e.brand} ${e.model}</td>
           <td>
-            <span class="col-status status-${e.status}">
+            <span class="col-status status-${e.status.replace(/\s+/g, '-')}">
               <span class="status-dot"></span>
               ${STATUS_LABELS[e.status] || e.status}
             </span>
@@ -842,7 +842,7 @@
             </div>
             <div class="details-info-item">
               <span class="details-info-label">Status:</span>
-              <span class="col-status status-${equipment.status}">
+              <span class="col-status status-${equipment.status.replace(/\s+/g, '-')}">
                 <span class="status-dot"></span>
                 ${STATUS_LABELS[equipment.status] || equipment.status}
               </span>
