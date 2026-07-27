@@ -600,6 +600,11 @@
         <option value="Ready for sale">Disponível para venda</option>
         <option value="Sold">Vendido</option>
       </select>
+      <select id="sort-page-count" class="filter-select" onchange="filterEquipments()">
+        <option value="none">Ordenação: Padrão</option>
+        <option value="desc">Contador: Maior para menor</option>
+        <option value="asc">Contador: Menor para maior</option>
+      </select>
     </div>
 
     <div class="table-container">
@@ -745,7 +750,14 @@
               <span>${typeLabel}</span>
             </span>
           </td>
-          <td class="col-printer">${e.brand} ${e.model}</td>
+          <td class="col-printer">
+            <div>${e.brand} ${e.model}</div>
+            ${(e.type === 'Printer' || e.type === 'Label Maker') ? `
+              <div style="font-size: 11px; color: var(--text-sub); margin-top: 2px;">
+                Contador: ${e.page_count !== null ? e.page_count.toLocaleString('pt-BR') : 'Sem contador'}
+              </div>
+            ` : ''}
+          </td>
           <td>
             <span class="col-status status-${e.status.replace(/\s+/g, '-')}">
               <span class="status-dot"></span>
@@ -771,8 +783,9 @@
       const q = document.getElementById('search-box').value.toLowerCase().trim();
       const type = document.getElementById('type-filter').value;
       const status = document.getElementById('status-filter').value;
+      const sortBy = document.getElementById('sort-page-count').value;
       
-      return allEquipments.filter(e => {
+      const filtered = allEquipments.filter(e => {
         const matchesType = (type === 'Todas' || e.type === type);
         const matchesStatus = (status === 'Todas' || e.status === status);
         const matchesQuery = !q || 
@@ -785,6 +798,32 @@
         
         return matchesType && matchesStatus && matchesQuery;
       });
+
+      if (sortBy === 'desc') {
+        filtered.sort((a, b) => {
+          const hasCountA = (a.type === 'Printer' || a.type === 'Label Maker') && a.page_count !== null;
+          const hasCountB = (b.type === 'Printer' || b.type === 'Label Maker') && b.page_count !== null;
+          
+          if (!hasCountA && !hasCountB) return 0;
+          if (!hasCountA) return 1;
+          if (!hasCountB) return -1;
+          
+          return b.page_count - a.page_count;
+        });
+      } else if (sortBy === 'asc') {
+        filtered.sort((a, b) => {
+          const hasCountA = (a.type === 'Printer' || a.type === 'Label Maker') && a.page_count !== null;
+          const hasCountB = (b.type === 'Printer' || b.type === 'Label Maker') && b.page_count !== null;
+          
+          if (!hasCountA && !hasCountB) return 0;
+          if (!hasCountA) return 1;
+          if (!hasCountB) return -1;
+          
+          return a.page_count - b.page_count;
+        });
+      }
+
+      return filtered;
     }
 
     function filterEquipments() {
@@ -853,6 +892,12 @@
               <span class="details-info-label">Nº de Série:</span>
               <span>${equipment.serial_number || '<span style="color: var(--text-muted)">-</span>'}</span>
             </div>
+            ${(equipment.type === 'Printer' || equipment.type === 'Label Maker') ? `
+              <div class="details-info-item">
+                <span class="details-info-label">Contador de Páginas:</span>
+                <span>${equipment.page_count !== null ? equipment.page_count.toLocaleString('pt-BR') : 'Sem contador'}</span>
+              </div>
+            ` : ''}
             <div class="details-info-item">
               <span class="details-info-label">Peça Necessária:</span>
               <span>${equipment.part_needed || '<span style="color: var(--text-muted)">-</span>'}</span>
@@ -918,6 +963,7 @@
           <th style="border: 1px solid #cbd5e1; padding: 8px;">Tipo</th>
           <th style="border: 1px solid #cbd5e1; padding: 8px;">Marca</th>
           <th style="border: 1px solid #cbd5e1; padding: 8px;">Modelo</th>
+          <th style="border: 1px solid #cbd5e1; padding: 8px;">Contador</th>
           <th style="border: 1px solid #cbd5e1; padding: 8px;">Nº de Série</th>
           <th style="border: 1px solid #cbd5e1; padding: 8px;">Peça Necessária</th>
           <th style="border: 1px solid #cbd5e1; padding: 8px;">Status</th>
@@ -934,6 +980,7 @@
           <td style="border: 1px solid #cbd5e1; padding: 8px;">${TYPE_LABELS[e.type] || e.type}</td>
           <td style="border: 1px solid #cbd5e1; padding: 8px;">${e.brand}</td>
           <td style="border: 1px solid #cbd5e1; padding: 8px;">${e.model}</td>
+          <td style="border: 1px solid #cbd5e1; padding: 8px; mso-number-format:'#\\,##0';">${(e.type === 'Printer' || e.type === 'Label Maker') && e.page_count !== null ? e.page_count : '-'}</td>
           <td style="border: 1px solid #cbd5e1; padding: 8px; mso-number-format:'\\@';">${e.serial_number || '-'}</td>
           <td style="border: 1px solid #cbd5e1; padding: 8px;">${e.part_needed || '-'}</td>
           <td style="border: 1px solid #cbd5e1; padding: 8px;">${STATUS_LABELS[e.status] || e.status}</td>
