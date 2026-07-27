@@ -32,6 +32,7 @@ export default function HomeScreen() {
   const [error, setError] = useState<string | null>(null);
   const [selectedStatuses, setSelectedStatuses] = useState<EquipmentStatus[]>([]);
   const [selectedTypes, setSelectedTypes] = useState<EquipmentType[]>([]);
+  const [sortByPageCount, setSortByPageCount] = useState<'none' | 'desc' | 'asc'>('none');
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [query, setQuery] = useState('');
 
@@ -65,6 +66,21 @@ export default function HomeScreen() {
     return matchesType && matchesStatus;
   });
 
+  const sortedAndFilteredEquipments = [...filteredEquipments].sort((a, b) => {
+    if (sortByPageCount === 'desc') {
+      const countA = a.page_count !== null ? a.page_count : -1;
+      const countB = b.page_count !== null ? b.page_count : -1;
+      return countB - countA;
+    } else if (sortByPageCount === 'asc') {
+      const countA = a.page_count !== null ? a.page_count : Infinity;
+      const countB = b.page_count !== null ? b.page_count : Infinity;
+      return countA - countB;
+    }
+    return 0; // 'none'
+  });
+
+  const activeFiltersCount = selectedStatuses.length + selectedTypes.length + (sortByPageCount !== 'none' ? 1 : 0);
+
   const okCount = equipments.filter(e => e.status === 'Functional').length;
   const maintenanceCount = equipments.filter(
     e => e.status === 'Needs maintenance' || e.status === 'In maintenance'
@@ -96,7 +112,7 @@ export default function HomeScreen() {
         <View style={styles.accordionHeaderLeft}>
           <Feather name="filter" size={14} color={COLORS.textSub} />
           <Text style={styles.accordionHeaderText}>
-            Filtros {selectedStatuses.length + selectedTypes.length > 0 ? `(${selectedStatuses.length + selectedTypes.length} ativos)` : ''}
+            Filtros {activeFiltersCount > 0 ? `(${activeFiltersCount} ativos)` : ''}
           </Text>
         </View>
         <Feather name={filtersExpanded ? 'chevron-up' : 'chevron-down'} size={16} color={COLORS.textSub} />
@@ -195,7 +211,7 @@ export default function HomeScreen() {
         <ActivityIndicator color={COLORS.textSub} style={{ marginTop: 48 }} />
       ) : (
         <FlatList
-          data={filteredEquipments}
+          data={sortedAndFilteredEquipments}
           keyExtractor={e => e.id}
           renderItem={({ item }) => <EquipmentCard equipment={item} baseUrl={baseUrl} />}
           contentContainerStyle={styles.list}
