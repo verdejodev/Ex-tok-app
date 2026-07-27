@@ -67,16 +67,18 @@ export default function HomeScreen() {
   });
 
   const sortedAndFilteredEquipments = [...filteredEquipments].sort((a, b) => {
+    if (sortByPageCount === 'none') return 0;
+
+    if (a.page_count === null && b.page_count === null) return 0;
+    if (a.page_count === null) return 1;
+    if (b.page_count === null) return -1;
+
     if (sortByPageCount === 'desc') {
-      const countA = a.page_count !== null ? a.page_count : -1;
-      const countB = b.page_count !== null ? b.page_count : -1;
-      return countB - countA;
+      return b.page_count - a.page_count;
     } else if (sortByPageCount === 'asc') {
-      const countA = a.page_count !== null ? a.page_count : Infinity;
-      const countB = b.page_count !== null ? b.page_count : Infinity;
-      return countA - countB;
+      return a.page_count - b.page_count;
     }
-    return 0; // 'none'
+    return 0;
   });
 
   const activeFiltersCount = selectedStatuses.length + selectedTypes.length + (sortByPageCount !== 'none' ? 1 : 0);
