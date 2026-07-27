@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Controle de Equipamentos de TI — Painel de Controle</title>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+    :root,
+    .dark {
+      --background: 0 0% 0%;
+      --foreground: 0 0% 98%;
+
+      --card: 0 0% 6%;
+      --card-foreground: 0 0% 98%;
+
+      --popover: 0 0% 6%;
+      --popover-foreground: 0 0% 98%;
+
+      --primary: #2fe92b;
+      --primary-foreground: 0 0% 0%;
+
+      --secondary: 0 0% 12%;
+      --secondary-foreground: 0 0% 98%;
+
+      --muted: 0 0% 12%;
+      --muted-foreground: 100 8% 55%;
+
+      --accent: #2fe92b;
+      --accent-foreground: 0 0% 0%;
+      --accent-hover: #26c623;
+
+      --destructive: #ff5102;
+      --destructive-foreground: 0 0% 98%;
+
+      --border: #26272d;
+      --border-focus: #2fe92b;
+      --input: #26272d;
+      --ring: #2fe92b;
+
+      --radius: 0.25rem;
+
+      --chart-1: #2fe92b;
+      --chart-2: #c4b5fd;
+      --chart-3: #60a5fa;
+      --chart-4: #fbbf24;
+      --chart-5: #94a3b8;
+
+      --bg: #000000;
+      --surface: #0f0f0f;
+      --surface-alt: #1b1b1d;
+      --text: #ffffff;
+      --text-muted: #6b7367;
+      --text-sub: #bbcbb2;
+      
+      --status-ok: #2fe92b;
+      --status-maint-needed: #ff5102;
+      --status-in-maint: #60a5fa;
+      --status-sale: #c4b5fd;
+      --status-sold: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      padding: 40px 24px;
+      line-height: 1.5;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    body::before, body::after {
+      display: none !important;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .stat-card {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      display: none; /* Disable left line */
+    }
+
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background-color: var(--border-focus);
+    }
+
+    .stat-card.functional::after { background-color: var(--primary); }
+    .stat-card.needs-maint::after { background-color: var(--destructive); }
+    .stat-card.in-maint::after { background-color: var(--chart-3); }
+    .stat-card.ready-sale::after { background-color: var(--chart-2); }
+    .stat-card.sold::after { background-color: var(--chart-5); }
+
+    .stat-label {
+      color: var(--text-sub);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .search-input {
+      flex: 1;
+      min-width: 260px;
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--border-focus);
+    }
+
+    .filter-select {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 10px 14px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .filter-select:focus {
+      border-color: var(--border-focus);
+    }
+
+    .btn-export {
+      background-color: var(--surface-alt);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 10px 18px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-export:hover {
+      background-color: var(--surface);
+      border-color: var(--border-focus);
+      color: var(--primary);
+    }
+
+    .table-container {
+      background-color: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    th {
+      background-color: var(--surface-alt);
+      color: var(--text-sub);
+      font-weight: 600;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      text-transform: uppercase;
+      font-size: 11px;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      vertical-align: middle;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background-color: var(--surface-alt);
+      transition: background-color 150ms ease;
+    }
+
+    .col-code {
+      font-family: monospace;
+      font-size: 13px;
+      color: var(--primary);
+    }
+
+    .col-printer {
+      font-weight: 600;
+    }
+
+    .col-type-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+
+    .col-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: var(--radius);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+    }
+
+    .status-Functional { background-color: rgba(47, 233, 43, 0.1); color: var(--status-ok); }
+    .status-Functional .status-dot { background-color: var(--status-ok); }
+
+    .status-Needs\ maintenance { background-color: rgba(255, 81, 2, 0.1); color: var(--status-maint-needed); }
+    .status-Needs\ maintenance .status-dot { background-color: var(--status-maint-needed); }
+
+    .status-In\ maintenance { background-color: rgba(96, 165, 250, 0.1); color: var(--status-in-maint); }
+    .status-In\ maintenance .status-dot { background-color: var(--status-in-maint); }
+
+    .status-Ready\ for\ sale { background-color: rgba(196, 181, 253, 0.1); color: var(--status-sale); }
+    .status-Ready\ for\ sale .status-dot { background-color: var(--status-sale); }
+
+    .status-Sold { background-color: rgba(148, 163, 184, 0.1); color: var(--status-sold); }
+    .status-Sold .status-dot { background-color: var(--status-sold); }
+
+    .photo-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      color: var(--text-sub);
+      transition: color 0.2s;
+    }
+
+    .photo-trigger:hover {
+      color: var(--text);
+    }
+
+    .photo-thumbnail {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius);
+      background-color: var(--surface-alt);
+      object-fit: cover;
+      border: 1px solid var(--border);
+    }
+
+    .empty-state {
+      padding: 48px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 15px;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.95);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .modal.show {
+      display: flex;
+      opacity: 1;
+    }
+
+    .modal-content {
+      max-width: 90%;
+      max-height: 80%;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      background-color: var(--surface-alt);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 16px;
+      border-radius: var(--radius);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .modal-close:hover {
+      background-color: var(--border-focus);
+      color: var(--primary);
+    }
+
+    /* Details Modal Styles */
+    .details-modal-container {
+      background-color: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px;
+      width: 90%;
+      max-width: 850px;
+      max-height: 85vh;
+      overflow-y: auto;
+      position: relative;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+    }
+
+    .details-modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: none;
+      border: none;
+      color: var(--text-sub);
+      font-size: 20px;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .details-modal-close:hover {
+      color: var(--primary);
+    }
+
+    .details-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 768px) {
+      .details-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Left Column & Info styles */
+    .details-left-col h2 {
+      color: var(--text);
+      font-size: 22px;
+      margin-bottom: 4px;
+    }
+
+    .details-code {
+      color: var(--primary);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: inline-block;
+    }
+
+    .details-info-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .details-info-item {
+      font-size: 14px;
+      line-height: 1.4;
+    }
+
+    .details-info-label {
+      color: var(--text-sub);
+      font-weight: 500;
+      margin-right: 6px;
+    }
+
+    .details-gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .details-gallery img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      transition: border-color 0.2s;
+    }
+
+    .details-gallery img:hover {
+      border-color: var(--primary);
+    }
+
+    /* Right Column & Timeline styles */
+    .details-right-col h3 {
+      font-size: 16px;
+      color: var(--text);
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    .details-timeline {
+      position: relative;
+      padding-left: 20px;
+      border-left: 2px solid var(--border);
+      margin-left: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .timeline-item {
+      position: relative;
+    }
+
+    .timeline-dot {
+      position: absolute;
+      left: -25px;
+      top: 5px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: var(--primary);
+      box-shadow: 0 0 8px var(--primary);
+    }
+
+    .timeline-date {
+      font-size: 11px;
+      color: var(--primary);
+      font-family: var(--font-mono);
+      margin-bottom: 4px;
+    }
+
+    .timeline-desc {
+      font-size: 13px;
+      color: var(--text-sub);
+      line-height: 1.4;
+    }
+
+    .timeline-photo {
+      width: 120px;
+      height: 80px;
+      object-fit: cover;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      margin-top: 8px;
+      cursor: pointer;
+      display: block;
+    }
+
+    .timeline-photo:hover {
+      border-color: var(--primary);
+    }
+
+    /* Clickable rows pointer */
+    tbody tr {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1>Controle de Equipamentos de TI</h1>
+      <button class="btn-export" onclick="exportToExcelData()">
+        <i data-lucide="download" style="width: 16px; height: 16px;"></i>
+        Exportar para Excel
+      </button>
+    </header>
+
+    <div class="stats-grid">
+      <div class="stat-card" id="card-total">
+        <span class="stat-label">Total Ativos</span>
+        <span class="stat-value" id="val-total">-</span>
+      </div>
+      <div class="stat-card functional">
+        <span class="stat-label">OK / Funcionando</span>
+        <span class="stat-value" id="val-functional">-</span>
+      </div>
+      <div class="stat-card needs-maint">
+        <span class="stat-label">Precisa Manutenção</span>
+        <span class="stat-value" id="val-needs-maint">-</span>
+      </div>
+      <div class="stat-card in-maint">
+        <span class="stat-label">Em Manutenção</span>
+        <span class="stat-value" id="val-in-maint">-</span>
+      </div>
+      <div class="stat-card ready-sale">
+        <span class="stat-label">Disponível</span>
+        <span class="stat-value" id="val-ready-sale">-</span>
+      </div>
+    </div>
+
+    <div class="controls">
+      <input type="text" id="search-box" class="search-input" placeholder="Buscar por marca, modelo, série ou patrimônio..." oninput="filterEquipments()">
+      
+      <select id="type-filter" class="filter-select" onchange="filterEquipments()">
+        <option value="Todas">Todos os Tipos</option>
+        <option value="Computer">Computador</option>
+        <option value="Notebook">Notebook</option>
+        <option value="Printer">Impressora</option>
+        <option value="Label Maker">Etiquetadora</option>
+        <option value="Network">Rede</option>
+        <option value="Other">Outro</option>
+      </select>
+
+      <select id="status-filter" class="filter-select" onchange="filterEquipments()">
+        <option value="Todas">Todos os Status</option>
+        <option value="Functional">OK (Funcionando)</option>
+        <option value="Needs maintenance">Precisa manutenção</option>
+        <option value="In maintenance">Em manutenção</option>
+        <option value="Ready for sale">Disponível para venda</option>
+        <option value="Sold">Vendido</option>
+      </select>
+    </div>
+
+    <div class="table-container">
+      <table id="equipments-table">
+        <thead>
+          <tr>
+            <th style="width: 60px">Foto</th>
+            <th>Patrimônio</th>
+            <th>Tipo</th>
+            <th>Marca & Modelo</th>
+            <th>Status</th>
+            <th>Nº de Série</th>
+            <th>Especificações</th>
+            <th>Localização</th>
+            <th>Notas</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <!-- Dynamically populated -->
+        </tbody>
+      </table>
+      <div id="no-data" class="empty-state" style="display: none;">
+        Nenhum equipamento encontrado.
+      </div>
+    </div>
+  </div>
+
+  <div id="photo-modal" class="modal" onclick="closeModal()">
+    <button class="modal-close" onclick="closeModal()">Fechar</button>
+    <img id="modal-img" class="modal-content" src="" alt="Foto do equipamento" onclick="event.stopPropagation()">
+  </div>
+
+  <!-- Modal de Detalhes Completo -->
+  <div id="details-modal" class="modal" onclick="closeDetailsModal()">
+    <div class="details-modal-container" onclick="event.stopPropagation()">
+      <button class="details-modal-close" onclick="closeDetailsModal()">✕</button>
+      <div class="details-grid">
+        <div class="details-left-col" id="details-info-container">
+          <!-- Carregado via JS -->
+        </div>
+        <div class="details-right-col">
+          <h3>Histórico de Manutenções</h3>
+          <div class="details-timeline" id="details-timeline-container">
+            <!-- Carregado via JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allEquipments = [];
+    
+    const STATUS_LABELS = {
+      'Functional': 'OK',
+      'Needs maintenance': 'Precisa manutenção',
+      'In maintenance': 'Em manutenção',
+      'Ready for sale': 'Disponível',
+      'Sold': 'Vendido'
+    };
+
+    const TYPE_LABELS = {
+      'Computer': 'Computador',
+      'Notebook': 'Notebook',
+      'Printer': 'Impressora',
+      'Label Maker': 'Etiquetadora',
+      'Network': 'Rede',
+      'Other': 'Outro'
+    };
+
+    const TYPE_ICONS = {
+      'Computer': 'monitor',
+      'Notebook': 'laptop',
+      'Printer': 'printer',
+      'Label Maker': 'tag',
+      'Network': 'globe',
+      'Other': 'package'
+    };
+
+    async function loadData() {
+      try {
+        const res = await fetch('/api/equipments');
+        if (!res.ok) throw new Error('API Error');
+        allEquipments = await res.json();
+        
+        updateStats();
+        renderTable(allEquipments);
+      } catch (err) {
+        console.error('Falha ao carregar ativos:', err);
+        document.getElementById('table-body').innerHTML = `
+          <tr>
+            <td colspan="9" style="text-align: center; color: #f87171; padding: 24px;">
+              Falha ao carregar os dados. Verifique se o servidor está ativo.
+            </td>
+          </tr>
+        `;
+      }
+    }
+
+    function updateStats() {
+      document.getElementById('val-total').innerText = allEquipments.length;
+      document.getElementById('val-functional').innerText = allEquipments.filter(e => e.status === 'Functional').length;
+      document.getElementById('val-needs-maint').innerText = allEquipments.filter(e => e.status === 'Needs maintenance').length;
+      document.getElementById('val-in-maint').innerText = allEquipments.filter(e => e.status === 'In maintenance').length;
+      document.getElementById('val-ready-sale').innerText = allEquipments.filter(e => e.status === 'Ready for sale').length;
+    }
+
+    function renderTable(equipments) {
+      const tbody = document.getElementById('table-body');
+      const noData = document.getElementById('no-data');
+      tbody.innerHTML = '';
+      
+      if (equipments.length === 0) {
+        noData.style.display = 'block';
+        return;
+      }
+      noData.style.display = 'none';
+
+      equipments.forEach(e => {
+        const tr = document.createElement('tr');
+        tr.setAttribute('onclick', `openDetailsModal('${e.id}')`);
+        
+        let photoCell = '<span style="color: var(--text-muted)">-</span>';
+        if (e.primary_photo_url) {
+          const photoUrl = e.primary_photo_url;
+          photoCell = `
+            <div class="photo-trigger" onclick="event.stopPropagation(); openModal('${photoUrl}')">
+              <img class="photo-thumbnail" src="${photoUrl}" alt="Thumb">
+            </div>
+          `;
+        }
+
+        const iconName = TYPE_ICONS[e.type] || 'package';
+        const typeLabel = TYPE_LABELS[e.type] || e.type;
+
+        tr.innerHTML = `
+          <td>${photoCell}</td>
+          <td class="col-code">${e.internal_code}</td>
+          <td>
+            <span class="col-type-tag">
+              <i data-lucide="${iconName}" style="width: 14px; height: 14px; stroke-width: 2.5; vertical-align: middle;"></i>
+              <span>${typeLabel}</span>
+            </span>
+          </td>
+          <td class="col-printer">${e.brand} ${e.model}</td>
+          <td>
+            <span class="col-status status-${e.status}">
+              <span class="status-dot"></span>
+              ${STATUS_LABELS[e.status] || e.status}
+            </span>
+          </td>
+          <td>${e.serial_number || '<span style="color: var(--text-muted)">-</span>'}</td>
+          <td style="color: var(--text-sub); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap" title="${e.specs || ''}">
+            ${e.specs || '-'}
+          </td>
+          <td>${e.location || '<span style="color: var(--text-muted)">-</span>'}</td>
+          <td style="color: var(--text-sub); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap" title="${e.notes || ''}">
+            ${e.notes || '-'}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+      lucide.createIcons();
+    }
+
+    function getFilteredEquipments() {
+      const q = document.getElementById('search-box').value.toLowerCase().trim();
+      const type = document.getElementById('type-filter').value;
+      const status = document.getElementById('status-filter').value;
+      
+      return allEquipments.filter(e => {
+        const matchesType = (type === 'Todas' || e.type === type);
+        const matchesStatus = (status === 'Todas' || e.status === status);
+        const matchesQuery = !q || 
+          e.brand.toLowerCase().includes(q) ||
+          e.model.toLowerCase().includes(q) ||
+          (e.serial_number && e.serial_number.toLowerCase().includes(q)) ||
+          (e.specs && e.specs.toLowerCase().includes(q)) ||
+          e.internal_code.toLowerCase().includes(q) ||
+          (e.location && e.location.toLowerCase().includes(q));
+        
+        return matchesType && matchesStatus && matchesQuery;
+      });
+    }
+
+    function filterEquipments() {
+      renderTable(getFilteredEquipments());
+    }
+
+    function openModal(url) {
+      const modal = document.getElementById('photo-modal');
+      const img = document.getElementById('modal-img');
+      img.src = url;
+      modal.classList.add('show');
+    }
+
+    function closeModal() {
+      document.getElementById('photo-modal').classList.remove('show');
+    }
+
+    async function openDetailsModal(id) {
+      const modal = document.getElementById('details-modal');
+      const infoContainer = document.getElementById('details-info-container');
+      const timelineContainer = document.getElementById('details-timeline-container');
+
+      infoContainer.innerHTML = `<div style="color: var(--text-sub)">Carregando detalhes...</div>`;
+      timelineContainer.innerHTML = `<div style="color: var(--text-sub)">Carregando histórico...</div>`;
+
+      modal.classList.add('show');
+
+      try {
+        const [equipment, logs] = await Promise.all([
+          fetch(`/api/equipments/${id}`).then(r => r.json()),
+          fetch(`/api/equipments/${id}/logs`).then(r => r.json())
+        ]);
+
+        // Render Left Column (Info)
+        let galleryHtml = '';
+        if (equipment.photos && equipment.photos.length > 0) {
+          galleryHtml = `
+            <div style="margin-top: 16px;">
+              <span class="details-info-label" style="display: block; margin-bottom: 8px;">Galeria de Imagens:</span>
+              <div class="details-gallery">
+                ${equipment.photos.map(p => `
+                  <img src="${p.url}" alt="Foto" onclick="openModal('${p.url}')">
+                `).join('')}
+              </div>
+            </div>
+          `;
+        }
+
+        infoContainer.innerHTML = `
+          <h2>${equipment.brand} ${equipment.model}</h2>
+          <span class="details-code">${equipment.internal_code}</span>
+          
+          <div class="details-info-list">
+            <div class="details-info-item">
+              <span class="details-info-label">Tipo:</span>
+              <span>${TYPE_LABELS[equipment.type] || equipment.type}</span>
+            </div>
+            <div class="details-info-item">
+              <span class="details-info-label">Status:</span>
+              <span class="col-status status-${equipment.status}">
+                <span class="status-dot"></span>
+                ${STATUS_LABELS[equipment.status] || equipment.status}
+              </span>
+            </div>
+            <div class="details-info-item">
+              <span class="details-info-label">Nº de Série:</span>
+              <span>${equipment.serial_number || '<span style="color: var(--text-muted)">-</span>'}</span>
+            </div>
+            <div class="details-info-item">
+              <span class="details-info-label">Localização:</span>
+              <span>${equipment.location || '<span style="color: var(--text-muted)">-</span>'}</span>
+            </div>
+            <div class="details-info-item">
+              <span class="details-info-label">Ficha Técnica:</span>
+              <span style="display: block; margin-top: 4px; color: var(--text-sub); white-space: pre-wrap;">${equipment.specs || '-'}</span>
+            </div>
+            <div class="details-info-item">
+              <span class="details-info-label">Notas Gerais:</span>
+              <span style="display: block; margin-top: 4px; color: var(--text-sub); white-space: pre-wrap;">${equipment.notes || '-'}</span>
+            </div>
+          </div>
+          ${galleryHtml}
+        `;
+
+        // Render Right Column (Logs Timeline)
+        if (logs.length === 0) {
+          timelineContainer.innerHTML = `<div style="color: var(--text-muted); font-size: 13px;">Sem registros de manutenção anteriores.</div>`;
+        } else {
+          timelineContainer.innerHTML = logs.map(l => {
+            const dateFormatted = l.date.slice(0, 10).split('-').reverse().join('/');
+            let logPhotoHtml = '';
+            if (l.photo_url) {
+              logPhotoHtml = `<img class="timeline-photo" src="${l.photo_url}" alt="Foto da manutenção" onclick="openModal('${l.photo_url}')">`;
+            }
+            return `
+              <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-date">${dateFormatted}</div>
+                <div class="timeline-desc">${l.description}</div>
+                ${logPhotoHtml}
+              </div>
+            `;
+          }).join('');
+        }
+
+      } catch (err) {
+        infoContainer.innerHTML = `<div style="color: var(--destructive)">Erro ao carregar detalhes.</div>`;
+        timelineContainer.innerHTML = `<div style="color: var(--destructive)">Erro ao carregar histórico.</div>`;
+      }
+    }
+
+    function closeDetailsModal() {
+      document.getElementById('details-modal').classList.remove('show');
+    }
+
+    function exportToExcelData() {
+      const exportList = getFilteredEquipments();
+
+      if (exportList.length === 0) {
+        alert('Sem dados para exportar.');
+        return;
+      }
+
+      const header = `
+        <tr style="background-color: #334155; color: #ffffff; font-weight: bold;">
+          <th style="border: 1px solid #cbd5e1; padding: 8px;">Patrimônio</th>
+          <th style="border: 1px solid #cbd5e1; padding: 8px;">Tipo</th>
+          <th style="border: 1px solid #cbd5e1; padding: 8px;">Marca</th>
+          <th style="border: 1px solid #cbd5e1; padding: 8px;">Modelo</th>
+          <th style="border: 1px solid #cbd5e1; padding: 8px;">Nº de Série</th>
+          <th style="border: 1px solid #cbd5e1; padding: 8px;">Status</th>
+          <th style="border: 1px solid #cbd5e1; padding: 8px;">Especificações</th>
+          <th style="border: 1px solid #cbd5e1; padding: 8px;">Localização</th>
+          <th style="border: 1px solid #cbd5e1; padding: 8px;">Notas</th>
+          <th style="border: 1px solid #cbd5e1; padding: 8px;">Data Cadastro</th>
+        </tr>
+      `;
+
+      const rows = exportList.map(e => `
+        <tr>
+          <td style="border: 1px solid #cbd5e1; padding: 8px; mso-number-format:'\\@';">${e.internal_code}</td>
+          <td style="border: 1px solid #cbd5e1; padding: 8px;">${TYPE_LABELS[e.type] || e.type}</td>
+          <td style="border: 1px solid #cbd5e1; padding: 8px;">${e.brand}</td>
+          <td style="border: 1px solid #cbd5e1; padding: 8px;">${e.model}</td>
+          <td style="border: 1px solid #cbd5e1; padding: 8px; mso-number-format:'\\@';">${e.serial_number || '-'}</td>
+          <td style="border: 1px solid #cbd5e1; padding: 8px;">${STATUS_LABELS[e.status] || e.status}</td>
+          <td style="border: 1px solid #cbd5e1; padding: 8px;">${e.specs || '-'}</td>
+          <td style="border: 1px solid #cbd5e1; padding: 8px;">${e.location || '-'}</td>
+          <td style="border: 1px solid #cbd5e1; padding: 8px;">${e.notes || '-'}</td>
+          <td style="border: 1px solid #cbd5e1; padding: 8px;">${new Date(e.created_at).toLocaleDateString('pt-BR')}</td>
+        </tr>
+      `).join('');
+
+      const template = `
+        <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+          <meta charset="utf-8">
+          <!--[if gte mso 9]>
+          <xml>
+            <x:ExcelWorkbook>
+              <x:ExcelWorksheets>
+                <x:ExcelWorksheet>
+                  <x:Name>Inventario_TI</x:Name>
+                  <x:WorksheetOptions>
+                    <x:DisplayGridlines/>
+                  </x:WorksheetOptions>
+                </x:ExcelWorksheet>
+              </x:ExcelWorksheets>
+            </x:ExcelWorkbook>
+          </xml>
+          <![endif]-->
+        </head>
+        <body>
+          <table style="border-collapse: collapse; font-family: sans-serif; font-size: 12px;">
+            <thead>${header}</thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </body>
+        </html>
+      `;
+
+      const blob = new Blob([template], { type: 'application/vnd.ms-excel' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const dateStr = new Date().toISOString().slice(0, 10).split('-').reverse().join('-');
+      a.href = url;
+      a.download = `inventario_ti_${dateStr}.xls`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
