@@ -73,13 +73,13 @@ locally on it, over the local network (wifi/LAN), with no external service:
   local IP on the network (e.g. `http://192.168.x.x:3000`).
 - **Backend**: Node.js + Express running on the notebook itself, exposing a
   simple REST API (printer CRUD, photo upload, maintenance history).
-- **Database**: local MySQL on the notebook (via XAMPP, or MySQL installed
-  directly on Fedora — `dnf install mysql-server`, or a Docker container if
-  you'd rather keep it isolated).
+- **Database**: local SQLite on the notebook via `better-sqlite3`
+  — no external service or server process needed, single-file database.
 - **Photos**: stored on disk on the notebook (an `uploads/` folder), with the
-  relative path/URL saved in MySQL — avoids storing Base64 blobs in the database.
+  relative path/URL saved in SQLite — avoids storing Base64 blobs in the database.
 - **Notebook access**: since the backend already runs there, a simple web page
-  (React or plain HTML+JS) served by the same Express app, hitting the same API.
+  (plain HTML+JS) served by the same Express app as static assets, hitting the
+  same API.
 
 **Watch out for**: since the app depends on the notebook being on and on the
 same network, registering printers somewhere without wifi (e.g. another floor
@@ -90,14 +90,18 @@ and only be addressed if it becomes a real problem.
 
 ## Data model (draft)
 
-**printers**
-`id, brand, model, serial_number, status, page_count, part_needed, location, estimated_value, notes, created_at, updated_at`
+> Note: the project started focused on printers but was later generalized to
+> all IT equipment. The `equipments` table replaced `printers` — see the actual
+> schema in `backend/src/db.js`.
+
+**equipments**
+`id, type, brand, model, serial_number, internal_code, status, page_count, part_needed, location, estimated_value, notes, specs, created_at, updated_at`
 
 **maintenance_logs**
-`id, printer_id (FK), date, description, photo_url`
+`id, equipment_id (FK), date, description, photo_url, created_at`
 
 **photos**
-`id, printer_id (FK), maintenance_log_id (FK, optional), url, created_at`
+`id, equipment_id (FK), maintenance_log_id (FK, optional), url, created_at`
 
 ## MVP scope
 
